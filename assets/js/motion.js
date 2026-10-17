@@ -347,23 +347,79 @@
     document.documentElement.classList.add("has-cursor");
     const ring = $(".cur-ring", cur), dot = $(".cur-dot", cur), label = $("span", ring);
     let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
+
+    /* --- luminosità di ciò che sta sotto il cursore (giallo su scuro, nero su chiaro) --- */
+    const luma = (r, g, b) => (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = 1;
+    const cx = cv.getContext("2d", { willReadFrequently: true });
+    function imgLuma(img, x, y) {
+      try {
+        if (!img.complete || !img.naturalWidth) return null;
+        const r = img.getBoundingClientRect();
+        const pos = getComputedStyle(img).objectPosition.split(" ").map((v) => parseFloat(v) / 100);
+        const sc = Math.max(r.width / img.naturalWidth, r.height / img.naturalHeight);
+        const ox = (r.width - img.naturalWidth * sc) * (isNaN(pos[0]) ? 0.5 : pos[0]);
+        const oy = (r.height - img.naturalHeight * sc) * (isNaN(pos[1]) ? 0.5 : pos[1]);
+        const sx = clamp((x - r.left - ox) / sc, 0, img.naturalWidth - 1);
+        const sy = clamp((y - r.top - oy) / sc, 0, img.naturalHeight - 1);
+        cx.drawImage(img, sx, sy, 1, 1, 0, 0, 1, 1);
+        const d = cx.getImageData(0, 0, 1, 1).data;
+        return luma(d[0], d[1], d[2]);
+      } catch (e) { return null; } // es. file:// (canvas "tainted"): si assume scuro
+    }
+    function isLightUnder(t, x, y) {
+      if (!t || !t.closest) return false;
+      // foto "libere" (galleria e foto di sezione): si campiona il pixel; le fasce con ombra in basso contano come scure
+      const fig = t.closest("figure");
+      const img = fig && $("img", fig);
+      if (img) {
+        const fr = fig.getBoundingClientRect();
+        if (fig.closest(".track") && y > fr.top + fr.height * 0.62) return false;
+        const l = imgLuma(img, x, y);
+        return l !== null && l > 0.5;
+      }
+      // sfondi scuri con foto sotto (hero, percorso, citazione, newsletter): sempre scuri
+      if (t.closest(".hero-media, .process-bg, .statement, .news")) return false;
+      for (let el = t; el && el !== document.documentElement; el = el.parentElement) {
+        const m = getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/);
+        if (!m) continue;
+        const [r, g, b, a = 1] = m[1].split(",").map(parseFloat);
+        if (a > 0.6) return luma(r, g, b) > 0.5;
+      }
+      return false;
+    }
+
+    function refresh() {
+      const t = document.elementFromPoint(mx, my);
+      if (!t) return;
+      const lab = t.closest("[data-cursor]");
+      cur.classList.toggle("has-label", !!lab);
+      if (lab) label.textContent = lab.dataset.cursor;
+      cur.classList.toggle("is-link", !lab && !!t.closest("a, button, .chip, label.check, .acc-q, summary"));
+      cur.classList.toggle("is-text", !!t.closest("input:not([type=checkbox]):not([type=radio]):not([type=submit]), textarea, select"));
+      cur.classList.toggle("on-light", isLightUnder(t, mx, my));
+    }
+
     addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse") return;
       mx = e.clientX; my = e.clientY;
       cur.classList.remove("hide");
       dot.style.transform = `translate3d(${mx}px, ${my}px, 0)`;
-      const t = e.target;
-      const lab = t.closest && t.closest("[data-cursor]");
-      cur.classList.toggle("has-label", !!lab);
-      if (lab) label.textContent = lab.dataset.cursor;
-      cur.classList.toggle("is-link", !lab && !!(t.closest && t.closest("a, button, .chip, label.check, .acc-q, summary, select")));
-      cur.classList.toggle("is-text", !!(t.closest && t.closest("input, textarea")));
     }, { passive: true });
     document.addEventListener("mouseleave", () => cur.classList.add("hide"));
-    (function loop() {
+    // dentro la mappa (iframe) il mouse non arriva alla pagina: si nasconde il cursore personalizzato
+    $$("[data-map]").forEach((m) => {
+      m.addEventListener("mouseenter", () => m.classList.contains("loaded") && cur.classList.add("hide"));
+      m.addEventListener("mouseleave", () => cur.classList.remove("hide"));
+    });
+
+    let last = 0;
+    (function loop(now) {
       rx += (mx - rx) * 0.18; ry += (my - ry) * 0.18;
       ring.style.transform = `translate3d(${rx.toFixed(1)}px, ${ry.toFixed(1)}px, 0)`;
+      if (now - last > 70) { last = now; refresh(); } // anche mentre la pagina scorre sotto il mouse
       requestAnimationFrame(loop);
-    })();
+    })(0);
   }
 })();

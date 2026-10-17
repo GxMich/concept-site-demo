@@ -27,7 +27,8 @@ assets/img/                     foto (WebP, due misure) e loghi presi dal sito o
 - **Galleria navigabile:** frecce, contatore, barra di avanzamento, tastiera e trascinamento col mouse.
 - **Mappa interattiva** di Google Maps, caricata solo su richiesta (o con il consenso «Funzionali»).
 - **Barra mobile** «Chiama / Prenota il check-up» che sparisce quando il modulo è in vista.
-- **Cursore personalizzato** (solo mouse), **transizione a sipario** tra home e pagina legale, **riflesso sui pulsanti**, menu con voce attiva.
+- **Cursore personalizzato** (solo mouse): sostituisce la freccia di sistema, è **giallo sugli sfondi scuri e nero su quelli chiari** (lo capisce da sfondo, pulsanti e foto sotto il puntatore, anche mentre scorri), si ingrandisce su link e pulsanti e mostra «Trascina» sulla galleria. Sui campi di testo torna il cursore a barra, e nella finestra delle preferenze cookie e nella mappa torna quello di sistema. Con «movimento ridotto» e su touch non c'è. 
+- **transizione a sipario** tra home e pagina legale, **riflesso sui pulsanti**, menu con voce attiva.
 - **Prestazioni:** foto convertite in WebP (da 2,6 MB a circa 1,6 MB nella versione desktop, versioni da ~50 KB per mobile). Resta un solo JPG, usato come immagine di anteprima social.
 - **Corretto:** alone quadrato attorno all'anello EMS.
 
