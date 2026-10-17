@@ -253,3 +253,6 @@
 }
 
 @media (max-width: 899px) { .js .process-rail { bottom: 150px; } }
+
+/* FAQ: il pulsante sta dentro un <h3>, quindi la risposta non è un "fratello" diretto: si apre tramite la classe sull'elemento */
+.acc-item.is-open .acc-a { grid-template-rows: 1fr; }

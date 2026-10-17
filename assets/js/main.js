@@ -110,12 +110,16 @@
 
   /* ---------- FAQ ---------- */
   const qs = $$(".acc-q");
+  const setOpen = (btn, open) => {
+    btn.setAttribute("aria-expanded", String(open));
+    btn.closest(".acc-item").classList.toggle("is-open", open);
+  };
   qs.forEach((btn) => btn.addEventListener("click", () => {
     const open = btn.getAttribute("aria-expanded") === "true";
-    qs.forEach((b) => b.setAttribute("aria-expanded", "false"));
-    btn.setAttribute("aria-expanded", String(!open));
+    qs.forEach((b) => setOpen(b, false));
+    setOpen(btn, !open);
   }));
-  qs[0] && qs[0].setAttribute("aria-expanded", "true");
+  qs[0] && setOpen(qs[0], true);
 
   /* ============================================================
      FORM (campi e testi dei form originali) — anche a passi
